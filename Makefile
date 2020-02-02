@@ -50,13 +50,22 @@ HASH_FILE :=${SRC_FILE}.sha1sum
 URL := $(SRC_BASEURL)/$(SRC_FILE)
 URL_SIGN := $(SRC_BASEURL)/$(SIGN_FILE)
 
-get-sources: $(SRC_FILE) $(SIGN_FILE)
+SPI_BASE_URL := https://github.com/roadrunner2/macbook12-spi-driver/archive
+SPI_REVISION := 31cc060adcb431efdf9cf547d600bb45bb00a7f4
+SPI_SRC_URL := $(SPI_BASE_URL)/$(SPI_REVISION).tar.gz
+SPI_SRC_FILE := macbook12-spi-driver-$(SPI_REVISION).tar.gz
+SPI_HASH_SHA256 := 46da514227bb2694e571ec4fff746d1302f41cdea5fe7cb2e522349f96ac83c1
+
+get-sources: $(SRC_FILE) $(SIGN_FILE) $(SPI_SRC_FILE)
 
 $(SRC_FILE):
 	@wget -q -N $(URL)
 
 $(SIGN_FILE):
 	@wget -q -N $(URL_SIGN)
+
+$(SPI_SRC_FILE):
+	@wget -q -N -O $(SPI_SRC_FILE) $(SPI_SRC_URL)
 
 import-keys:
 	@if [ -n "$$GNUPGHOME" ]; then rm -f "$$GNUPGHOME/linux-kernel-trustedkeys.gpg"; fi
@@ -72,11 +81,15 @@ else
 #	with a new key... oh, well...
 	sha1sum --quiet -c ${HASH_FILE}
 endif
+	@gunzip -c $(SPI_SRC_FILE) | sha256sum | head -c64 | grep -q "^$(SPI_HASH_SHA256)$$"
 
 .PHONY: clean-sources
 clean-sources:
 ifneq ($(SRC_FILE), None)
 	-rm $(SRC_FILE)
+endif
+ifneq ($(SPI_SRC_FILE), None)
+	-rm $(SPI_SRC_FILE)
 endif
 
 

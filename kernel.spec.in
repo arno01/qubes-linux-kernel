@@ -6,6 +6,7 @@
 %define plainrel @REL@
 %define rel %{plainrel}.%{variant}
 %define version @VERSION@
+%define spi_revision 31cc060adcb431efdf9cf547d600bb45bb00a7f4
 
 %define _buildshell /bin/bash
 %define build_xen       1
@@ -96,6 +97,7 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 ExclusiveArch:  x86_64
 
 Source0:        linux-%version.tar.xz
+Source6:        macbook12-spi-driver-%spi_revision.tar.gz
 Source16:       guards
 Source17:       apply-patches
 Source33:       check-for-config-changes
@@ -191,6 +193,10 @@ if [ -n "$u2mfn_ver" ]; then
     cp -r /usr/src/u2mfn-$u2mfn_ver %_builddir/u2mfn
 fi
 
+rm -rf %_builddir/macbook12-spi-driver
+tar -x -C %_builddir -zf %{SOURCE6}
+mv %_builddir/$(basename %{SOURCE6} .tar.gz) %_builddir/macbook12-spi-driver
+
 %build
 
 cd %kernel_build_dir
@@ -210,6 +216,11 @@ make %{?_smp_mflags} all $MAKE_ARGS CONFIG_DEBUG_SECTION_MISMATCH=y
 # Build u2mfn module
 if [ -d "%_builddir/u2mfn" ]; then
     make -C %kernel_build_dir M=%_builddir/u2mfn modules
+fi
+
+# Build applespi, apple-ibridge, apple-ib-tb, apple-ib-als modules
+if [ -d "%_builddir/macbook12-spi-driver" ]; then
+    make -C %kernel_build_dir M=%_builddir/macbook12-spi-driver modules
 fi
 
 %install
@@ -247,6 +258,9 @@ gzip -c9 < Module.symvers > %buildroot/boot/symvers-%kernelrelease.gz
 make modules_install $MAKE_ARGS INSTALL_MOD_PATH=%buildroot
 if [ -d "%_builddir/u2mfn" ]; then
     make modules_install $MAKE_ARGS INSTALL_MOD_PATH=%buildroot M=%_builddir/u2mfn
+fi
+if [ -d "%_builddir/macbook12-spi-driver" ]; then
+    make modules_install $MAKE_ARGS INSTALL_MOD_PATH=%buildroot M=%_builddir/macbook12-spi-driver
 fi
 
 mkdir -p %buildroot/%src_install_dir
