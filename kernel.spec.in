@@ -14,7 +14,7 @@
 %define prerelease 0
 %define rel %{plainrel}.%{variant}
 %endif
-%define spi_revision 31cc060adcb431efdf9cf547d600bb45bb00a7f4
+%define spi_revision ddfbc7733542b8474a0e8f593aba91e06542be4f
 
 %define _buildshell /bin/bash
 %define build_xen       1
